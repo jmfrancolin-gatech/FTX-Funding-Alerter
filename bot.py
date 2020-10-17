@@ -67,12 +67,12 @@ class Bot:
 
         # filter by future names
         if self.LIST_OF_FUTURES[0].lower() != 'all':
-            rates = rates[rates['future'].isin(LIST_OF_FUTURES)]
+            rates = rates[rates['future'].isin(self.LIST_OF_FUTURES)]
 
         # filter by number of futures
-        if len(rates) > 2 * self.OUTPUT_NUMBER:
+        if len(rates) > self.OUTPUT_NUMBER * 2:
             rates = rates.reset_index(drop=True)
-            rates = rates[0:self.OUTPUT_NUMBER].append(rates[-self.OUTPUT_NUMBER:])
+            rates = rates[0:self.OUTPUT_NUMBER].append(rates[len(rates)-self.OUTPUT_NUMBER:])
 
         # filter by rate threshold
         rates = rates[abs(rates['rate']) > self.OUTPUT_THRESHOLD]
