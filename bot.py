@@ -6,22 +6,22 @@ from environs import Env
 from datetime import datetime
 from dateutil import tz
 import telegram
-import config
 import time
 
 class Bot:
 
     def __init__(self):
-        # set up ftx client
-        self.ftx_client = client.FtxClient(
-            api_key=config.ftx_api_key, api_secret=config.ftx_api_secret)
-
-        # set up bot parameters
         env = Env()
         env.read_env()
+
+        # set up ftx client
+        self.ftx_client = client.FtxClient(
+            api_key=env.str('FTX_KEY'), api_secret=env.str('FTX_SECRET'))
+
+        # set up bot parameters
         self.UPDATE_DELAY = env.int('UPDATE_DELAY')
         self.OUTPUT_NUMBER = env.int('OUTPUT_NUMBER')
-        self.OUTPUT_THRESHOLD = env.int('OUTPUT_THRESHOLD')
+        self.OUTPUT_THRESHOLD = env.float('OUTPUT_THRESHOLD')
         self.LIST_OF_FUTURES = env.list('LIST_OF_FUTURES')
         
         # attempt to set up telegram client
@@ -84,15 +84,21 @@ class Bot:
         report = '[{timestamp}]\n'.format(
             timestamp=self.rate_time.strftime("%Y-%m-%d - %H:%M:%S"))
         
-        report += 'Top {X}:\n'.format(X=self.OUTPUT_NUMBER)
-        for i in range(self.OUTPUT_NUMBER):
-            report += '{fut} ({rate:.6f})\n'.format(
-                fut=rates.loc[i, 'future'], rate=rates.loc[i, 'rate'])
+        report += 'Top {X}:\n'.format(X=len(rates[rates['rate'] > 0]))
+        for i in range(len(rates[rates['rate'] > 0])):
+            try:
+                report += '{fut} ({rate:.6f})\n'.format(
+                    fut=rates.loc[i, 'future'], rate=rates.loc[i, 'rate'])
+            except:
+                break
         
-        report += '\nBottom {X}:\n'.format(X=self.OUTPUT_NUMBER)
-        for i in range(self.OUTPUT_NUMBER):
-            report += '{fut} ({rate:.6f})\n'.format(
-                fut=rates.loc[len(rates)-1-i, 'future'], rate=rates.loc[len(rates)-1-i, 'rate'])
+        report += '\nBottom {X}:\n'.format(X=len(rates[rates['rate'] < 0]))
+        for i in range(len(rates[rates['rate'] < 0])):
+            try:
+                report += '{fut} ({rate:.6f})\n'.format(
+                    fut=rates.loc[len(rates)-1-i, 'future'], rate=rates.loc[len(rates)-1-i, 'rate'])
+            except:
+                break
 
         return report
 
