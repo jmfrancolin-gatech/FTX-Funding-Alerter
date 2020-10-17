@@ -4,11 +4,10 @@ import pandas as pd
 from logzero import logger
 from environs import Env
 from datetime import datetime
+from dateutil import tz
 import telegram
 import config
 import time
-
-from dateutil import tz
 
 class Bot:
 
@@ -38,13 +37,19 @@ class Bot:
 
     def start(self):
 
+        logger.info('\nPress [Crt] + [c] to terminate bot')
+
         # loop forever
-        while True:
-            rates = self.get_rates()
-            rates = self.filter_rates(rates)
-            report = self.create_report(rates)
-            self.post_report(report)
-            time.sleep(self.UPDATE_DELAY)
+        try:
+            while True:
+                rates = self.get_rates()
+                rates = self.filter_rates(rates)
+                report = self.create_report(rates)
+                self.post_report(report)
+                time.sleep(self.UPDATE_DELAY)
+        finally:
+            logger.info('\nBot terminated.')
+            exit()
 
     def get_rates(self):
         resp = self.ftx_client.get('/funding_rates')
@@ -84,7 +89,7 @@ class Bot:
             report += '{fut} ({rate:.6f})\n'.format(
                 fut=rates.loc[i, 'future'], rate=rates.loc[i, 'rate'])
         
-        report += 'Bottom {X}:\n'.format(X=self.OUTPUT_NUMBER)
+        report += '\nBottom {X}:\n'.format(X=self.OUTPUT_NUMBER)
         for i in range(self.OUTPUT_NUMBER):
             report += '{fut} ({rate:.6f})\n'.format(
                 fut=rates.loc[len(rates)-1-i, 'future'], rate=rates.loc[len(rates)-1-i, 'rate'])
@@ -95,7 +100,7 @@ class Bot:
         if self.tg_client != None:
             self.tg_client.send_message(chat_id=self.TELEGRAM_CHAT_ID, text=report)
         else:
-            logger.info(report)
+            logger.info(str('\n')+report)
 
     def convert_timezone(self, utc: str):
         from_zone = tz.tzutc()
