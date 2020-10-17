@@ -1,0 +1,1 @@
+FTX client that periodically queires futures stats and post it to telegram
