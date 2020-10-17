@@ -1,5 +1,4 @@
-import pdb
-import client
+
 import pandas as pd
 from logzero import logger
 from environs import Env
@@ -7,6 +6,7 @@ from datetime import datetime
 from dateutil import tz
 import telegram
 import time
+import client
 
 class Bot:
 
@@ -22,13 +22,16 @@ class Bot:
         self.UPDATE_DELAY = env.int('UPDATE_DELAY')
         self.OUTPUT_NUMBER = env.int('OUTPUT_NUMBER')
         self.OUTPUT_THRESHOLD = env.float('OUTPUT_THRESHOLD')
-        self.LIST_OF_FUTURES = env.list('LIST_OF_FUTURES')
+        self.LIST_OF_FUTURES = env.list('LIST_OF_FUTURES')     
         
         # attempt to set up telegram client
         try:
+            print('hello')
             self.tg_client = telegram.Bot(token=env.str('TELEGRAM_TOKEN'))
             self.TELEGRAM_CHAT_ID = env.str('TELEGRAM_CHAT_ID')
+
         except:
+            print('shit')
             self.tg_client = None
             self.TELEGRAM_CHAT_ID = None
 
