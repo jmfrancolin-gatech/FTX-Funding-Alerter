@@ -26,12 +26,10 @@ class Bot:
         
         # attempt to set up telegram client
         try:
-            print('hello')
             self.tg_client = telegram.Bot(token=env.str('TELEGRAM_TOKEN'))
             self.TELEGRAM_CHAT_ID = env.str('TELEGRAM_CHAT_ID')
 
         except:
-            print('shit')
             self.tg_client = None
             self.TELEGRAM_CHAT_ID = None
 
@@ -39,10 +37,8 @@ class Bot:
         self.rate_time = None
 
     def start(self):
-
         logger.info('\nPress [Crt] + [c] to terminate bot')
-
-        # loop forever
+        # loop until Crt + C
         try:
             while True:
                 rates = self.get_rates()
@@ -55,6 +51,7 @@ class Bot:
             exit()
 
     def get_rates(self):
+        # query FTX
         resp = self.ftx_client.get('/funding_rates')
         rates = pd.DataFrame(resp)
         return rates.sort_values(by=['rate'], ascending=False).reset_index(drop=True)
@@ -84,9 +81,11 @@ class Bot:
 
     def create_report(self, rates):
 
+        # append timestamp to report
         report = '[{timestamp}]\n'.format(
             timestamp=self.rate_time.strftime("%Y-%m-%d - %H:%M:%S"))
         
+        # construct positive rates report
         report += 'Top {X}:\n'.format(X=len(rates[rates['rate'] > 0]))
         for i in range(len(rates[rates['rate'] > 0])):
             try:
@@ -95,6 +94,7 @@ class Bot:
             except:
                 break
         
+        # construct negative rates report
         report += '\nBottom {X}:\n'.format(X=len(rates[rates['rate'] < 0]))
         for i in range(len(rates[rates['rate'] < 0])):
             try:
