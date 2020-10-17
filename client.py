@@ -3,33 +3,34 @@ import hmac
 from requests import Request, Session, Response
 
 class FtxClient:
-    _ENDPOINT = 'https://ftx.com/api/'
+    ENDPOINT = 'https://ftx.com/api/'
 
     def __init__(self, api_key=None, api_secret=None):
-        self._session = Session()
-        self._api_key = api_key
-        self._api_secret = api_secret
+        self.session = Session()
+        self.api_key = api_key
+        self.api_secret = api_secret
 
-    def get(self, ts: int, path: str, params=None):
-        return self._request(ts, 'GET', path, params=params)
+    def get(self, path: str, params=None):
+        return self.request('GET', path, params=params)
 
-    def _request(self, ts: int, method: str, path: str, **kwargs):
-        request = Request(method, self._ENDPOINT + path, **kwargs)
-        self._sign_request(ts, request)
-        response = self._session.send(request.prepare())
-        return self._process_response(response)
+    def request(self, method: str, path: str, **kwargs):
+        request = Request(method, self.ENDPOINT + path, **kwargs)
+        self.sign_request(request)
+        response = self.session.send(request.prepare())
+        return self.process_response(response)
 
-    def _sign_request(self, ts: int, request: Request):
+    def sign_request(self, request: Request):
+        ts = int(time.time() * 1000)
         prepared = request.prepare()
         signature_payload = f'{ts}{prepared.method}{prepared.path_url}'.encode()
         if prepared.body:
             signature_payload += prepared.body
-        signature = hmac.new(self._api_secret.encode(), signature_payload, 'sha256').hexdigest()
-        request.headers['FTX-KEY'] = self._api_key
+        signature = hmac.new(self.api_secret.encode(), signature_payload, 'sha256').hexdigest()
+        request.headers['FTX-KEY'] = self.api_key
         request.headers['FTX-SIGN'] = signature
         request.headers['FTX-TS'] = str(ts)
 
-    def _process_response(self, response: Response):
+    def process_response(self, response: Response):
         try:
             data = response.json()
         except ValueError:
